@@ -124,6 +124,17 @@ Then we can ask:
 
 ## Implementation
 
+Here is the architecture diagram:
+
+![architecture](./architecture.png)
+
+- The Prolog program is written by the application developer.
+- In Prolog the ProofGen program in Prolog generates a Cairo program for proving the execution trace.
+- The ProofExec program in Prolog runs the application program, produces the execution trace and sends it to the Cairo Prover program.
+- The Cairo prover program creates a proof that is sent to SHARP (alternatively, the program itself is sent to SHARP).
+- SHARP recursively aggregates all proofs for on-chain verification.
+- The Input, Output and the Aggregate Proof are sent to the EVM for verification and state update.
+
 ### Execution Trace
 
 !!!TBD
