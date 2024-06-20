@@ -92,7 +92,7 @@ a(X) :- b(X), !, fail.
 which means "try to find solution for ```b(X)``` and if successful, assume $\lnot \exists X: a(X)$, on other words $\forall X: \lnot a(X)$. The execution trace of this is not a deterministic set of matches, but it should also include a set of failure execution sub-traces. In this project **we will not attempt to do this**, but instead we create proofs on from a set of pure Horn Clauses. Note that Prolog programs can be converted
 to pure Horn Clauses, but **Prolog assumes that if something cannot be proven, it is not true**. 
 
-## Implementation
+## Usage
 
 The Prolog program can be saved in a file, from which we can read it:
 ```
@@ -121,6 +121,27 @@ Then we can ask:
  which would produce the output "adam", but also produce a Stark proof of the Prolog execution trace and the resulting output.
 
  Finally (in the future), this proof can be submitted to SHARP, which would produce a combined proof and a commitment of the value "adam" on-chain as state change, governed by the verification of that proof.
+
+## Implementation
+
+### Execution Trace
+
+!!!TBD
+
+### Cairo Prover Generation
+
+!!!TBD
+
+## Complexity Analysis
+
+The Prolog program has a constant number $c$ of Horn Clauses, as the program is pre-written by the Smart Contract developer. If the program performs $E$ execution steps to find a solution and produce an execution trace, that trace
+can be as long as $E$ and as short as $\log_c(E) = O(\log E)$. More importantly, it is $\mathbf{N} E$, where $\mathbf{N}$ stands for non-deterministic. This in itself tremendously compresses the proof size. **Utilizing Prolog, we are taking advantage of every non-deterministic decision point, as if were able to guess it**.
+
+By the way, even if the proof size of some program that executes in non-deterministic polynomial time $\mathbf{N} P(n)$ is compressed to polynomial time $P(n)$, the burden of the non-determinism falls on the Prolog program.
+
+The execution trace, which in itself is a proof is then further compressed to a Stark proof of size $\mathbf{N} O(log^k(E))$, where $k$ is a constant, as Stark proof size is poly-log of its number of execution steps.
+
+This proof then can be further recursively compressed by SHARP by combining it with other proofs and effectively made even smaller, conceivably down to constant size (I am not completely sure of this, but converting it to SNARK certainly cuts it down to constant size).
 
 ## Future Work
 
