@@ -1,28 +1,4 @@
-#[derive(Drop)]
-struct Stack<T> {
-    data: Felt252Dict<Option<T>>,
-    len: usize,
-}
-
-#[generate_trait]
-impl StackImpl<T, +Drop<T>, +Copy<T>> of StackTrait<T> {
-    fn push(ref self: Stack<T>, value: T) {
-        self.data.insert(self.len.into(), StackTrait::new(value));
-        self.len += 1;
-    }
-
-    fn pop(ref self: Stack<T>) -> Option<T> {
-        if self.is_empty() {
-            return Option::None;
-        }
-        self.len -= 1;
-        Option::Some(self.data.get(self.len.into()).deref())
-    }
-
-    fn is_empty(self: @Stack<T>) -> bool {
-        *self.len == 0
-    }
-}
+use alexandria_data_structures::stack::{StackTrait, Felt252Stack, NullableStack};
 
 #[derive(Drop, Clone)]
 enum Term {
@@ -57,10 +33,33 @@ impl TermImpl of TermTrait {
     }
 }
 
-#[derive(Drop, Clone)]
+//#[derive(Drop, Copy, PertialEq, Clone)]
+#[derive(Clone)]
 struct Predicate {
     name: felt252,
     args: Array::<Term>,
+}
+
+impl DropPredicate of Drop {
+    fn drop(self: Predicate) {
+        self.name.drop();
+        self.args.drop();
+    }
+}
+
+impl CopyPredicate of Copy {
+    fn copy(self: Predicate) -> Predicate {
+        Predicate {
+            name: self.name,
+            args: self.args.copy(),
+        }
+    }
+}
+
+impl PartialEqPredicate of PartialEq {
+    fn eq(ref self: Predicate, other: @Predicate) -> bool {
+        self.name == other.name && self.args == other.args
+    }
 }
 
 #[generate_trait]
@@ -99,29 +98,11 @@ struct Clause {
 
 #[generate_trait]
 impl ClauseImpl of ClauseTrait {
-    // fn match_to(ref self: Clause, other: Clause) -> bool {
-    //     let mut bindings = Felt252Dict::<felt252>::new();
-    //     let mut isMatch = true;
-    //     if !self.head.match_to(other.head, bindings) {
-    //         isMatch = false;
-    //     } else {
-    //         let mut i = 0;
-    //         while i < self.Body.len() {
-    //             if !self.Body.at(i).match_to(other.Body.at(i), bindings) {
-    //                 isMatch = false;
-    //                 break;
-    //             }
-    //             i += 1;
-    //         }
-    //     }
-    //     isMatch
-    // }
-
     fn bind(ref self: Clause, bindings: @Array::<felt252>) {
         self.head.bind(bindings);
         let mut i = 0;
         while i < self.body.len() {
-            self.body.at(i).bind(bindings);
+            *self.body.at(i).bind(bindings);
             i += 1;
         }
     }
@@ -140,13 +121,13 @@ impl ProgramImpl of ProgramTrait {
     }
 
     // Verify single item in the execution trace item against the program
-    fn verify_item(ref self: Program, ref stack: Stack<Predicate>, clauseIndex: usize, variableBindings: @Array::<felt252>) -> bool {
+    fn verify_item(ref self: Program, ref stack: NullableStack::<Predicate>, clauseIndex: @usize, variableBindings: @Array::<felt252>) -> bool {
         if (stack.is_empty()) {
             return false;
         } else {
-            let mut clause = self.freshCopy(clauseIndex);
+            let mut clause = self.freshCopy(*clauseIndex);
             clause.bind(variableBindings);
-            if let Some(predicate::<Predicate>) = stack.pop() {
+            if let Option::Some(predicate) = stack.pop() {
                 if !clause.head.match_to(predicate) {
                     return false;
                 }
@@ -155,17 +136,17 @@ impl ProgramImpl of ProgramTrait {
             while i > 0 {
                 stack.push(clause.body.at(i-1));
                 i -= 1;
-            }
+            };
             true
         }
     }
 
     // Verify the execution trace against the program
     fn verify(ref self: Program, executionTrace: ExecutionTrace) -> bool {
-        let mut stack = Stack::<Predicate>::new();
+        let mut stack = StackTrait::<NullableStack, Predicate>::new();
         // Push the query to the stack and bind its variables
-        if let mut item = executionTrace.items.get(0) {
-            let mut clause = self.freshCopy(item.clauseIndex);
+        if let mut item = executionTrace.items.at(0) {
+            let mut clause = self.freshCopy(*item.clauseIndex);
             clause.bind(item.variableBindings);
             stack.push(clause);
         } else {
@@ -174,12 +155,13 @@ impl ProgramImpl of ProgramTrait {
         let mut isVerified = true;
         let mut i = 1;
         while i < executionTrace.items.len() {
-            if !self.verify_item(stack, item.clauseIndex, @item.variableBindings) {
+            let item = executionTrace.items.at(i);
+            if !self.verify_item(ref stack, item.clauseIndex, item.variableBindings) {
                 isVerified = false;
                 break;
             }
             i += 1;
-        }
+        };
         isVerified
     }
 }
@@ -202,44 +184,44 @@ impl ExecutionTraceImpl of ExecutionTraceTrait {
 fn build_program() -> Program {
     let mut clauses = ArrayTrait::<Clause>::new();
     let mut clause = Clause {
-        Head: Predicate {
-            Name: 'grandparent',
-            Args: array![Term::Var(0), Term::Var(1)],
+        head: Predicate {
+            name: 'grandparent',
+            args: array![Term::Var(0), Term::Var(1)],
         },
-        Body: array![
+        body: array![
             Predicate {
-                Name: 'parent',
-                Args: array![Term::Var(0), Term::Var(2)],
+                name: 'parent',
+                args: array![Term::Var(0), Term::Var(2)],
             },
             Predicate {
-                Name: 'parent',
-                Args: array![Term::Var(2), Term::Var(1)],
+                name: 'parent',
+                args: array![Term::Var(2), Term::Var(1)],
             },
         ],
     };
     clauses.append(clause);
     let mut clause = Clause {
-        Head: Predicate {
-            Name: 'parent',
-            Args: array![Term::Const('adam'), Term::Const('seth')],
+        head: Predicate {
+            name: 'parent',
+            args: array![Term::Const('adam'), Term::Const('seth')],
         },
-        Body: array![],
+        body: array![],
     };
     clauses.append(clause);
     let mut clause = Clause {
-        Head: Predicate {
-            Name: 'parent',
-            Args: array![Term::Const('seth'), Term::Const('enosh')],
+        head: Predicate {
+            name: 'parent',
+            args: array![Term::Const('seth'), Term::Const('enosh')],
         },
-        Body: array![],
+        body: array![],
     };
     clauses.append(clause);
     let mut clause = Clause {
-        Head: Predicate {
-            Name: 'parent',
-            Args: array![Term::Const('adam'), Term::Const('cain')],
+        head: Predicate {
+            name: 'parent',
+            args: array![Term::Const('adam'), Term::Const('cain')],
         },
-        Body: array![],
+        body: array![],
     };
     clauses.append(clause);
     Program { Clauses: clauses }
@@ -248,30 +230,30 @@ fn build_program() -> Program {
 fn build_execution_trace() -> Array::<Predicate> {
     let mut trace = ArrayTrait::<Predicate>::new();
     let mut predicate = Predicate {
-        Name: 'grandparent',
-        Args: array![Term::Const('adam'), Term::Const('enosh')],
+        name: 'grandparent',
+        args: array![Term::Const('adam'), Term::Const('enosh')],
     };
     trace.append(predicate);
     let mut predicate = Predicate {
-        Name: 'parent',
-        Args: array![Term::Const('adam'), Term::Const('seth')],
+        name: 'parent',
+        args: array![Term::Const('adam'), Term::Const('seth')],
     };
     trace.append(predicate);
     let mut predicate = Predicate {
-        Name: 'parent',
-        Args: array![Term::Const('seth'), Term::Const('enosh')],
+        name: 'parent',
+        args: array![Term::Const('seth'), Term::Const('enosh')],
     };
     trace.append(predicate);
     trace
 }
 
 fn main() -> u32 {
-    let program = build_program();
-    let trace = build_execution_trace();
+    let _program = build_program();
+    let _trace = build_execution_trace();
     // let mut result = 0;
     // for clause in program.Clauses {
     //     let mut match = true;
-    //     for predicate in clause.Body {
+    //     for predicate in clause.body {
     //         if !trace.contains(predicate) {
     //             match = false;
     //             break;
