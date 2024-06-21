@@ -51,7 +51,7 @@ p(A), q(A, B) :- r(A, B, C), s(B).
 ```
 Each such Horn Clause can be translated into the usual logic symbolic:
 
-$ \forall A, B, C: p(A) \lor q(A, B) <= r(A, B, C), s(B) $
+$ \forall A, B, C: p(A) \lor q(A, B) \Leftarrow r(A, B, C), s(B) $
 
 or 
 
