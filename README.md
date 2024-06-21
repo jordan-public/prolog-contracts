@@ -68,10 +68,8 @@ parent(adam, cain).
 ```
  would mean:
 
-$(\forall A, C, B: grandparent(A, C) \vee \lnot parent(A, B) \vee \lnot parent(B, C))\\$
-$\wedge parent(adam, seth) \\$
-$\wedge parent(seth, enosh) \\$
-$\wedge parent(adam, cain) \\$
+$(\forall A, C, B: grandparent(A, C) \vee \lnot parent(A, B) \vee \lnot parent(B, C)) \wedge$<br/>
+$parent(adam, seth) \wedge parent(seth, enosh) \wedge parent(adam, cain)$
 
 The proof (execution trace of the proof) of a query, for example ```?- grandparent(X, enosh).```, meaning "find X, such that, $grandparent(X, enosh)$" consists of asserting ```:- grandparent(X, enosh)``` or $\forall X: \lnot grandparent(X, enosh)$ and proving a contradiction by matching pairs of Horn Clauses such that $P$ in one binds to $\lnot P$ in another, which produces a new Horn Clause containing all predicates from both clauses except $P$. The proof is found if an empty clause can be derived. Kowalski has shown that any first-order logic statement
 can be proven this way. However, this problem is not easy, because a proper choice of matches has to be found to derive
