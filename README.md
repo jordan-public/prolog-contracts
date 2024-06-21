@@ -51,11 +51,11 @@ p(A), q(A, B) :- r(A, B, C), s(B).
 ```
 Each such Horn Clause can be translated into the usual logic symbolic:
 
-$ \forall A, \forall B, \forall C: p(A) \lor q(A, B) <= r(A, B, C), s(B)$
+$ \forall A, \forall B, \forall C: p(A) \lor q(A, B) <= r(A, B, C), s(B) $
 
 or 
 
-$ \forall A, \forall B, \forall C: p(A) \lor q(A, B) \lor \lnot r(A, B, C) \lor \lnot s(B)$.
+$ \forall A, \forall B, \forall C: p(A) \lor q(A, B) \lor \lnot r(A, B, C) \lor \lnot s(B) $.
 
 Variables such as $A$ above start with uppercase letter and constants start with lowercase letter or a are in quotes. Multiple Horn Clauses would be bound by conjunction, so for example:
 
@@ -68,10 +68,10 @@ parent(adam, cain).
 ```
  would mean:
 
-$(\forall A, \forall C, forall B: grandparent(A, C) \lor \lnot parent(A, B) \lor \lnot parent(B, C))\\$
-$\land parent(adam, seth) \\$
-$\land parent(seth, enosh) \\$
-$\land parent(adam, cain) \\$
+$ (\forall A, \forall C, forall B: grandparent(A, C) \lor \lnot parent(A, B) \lor \lnot parent(B, C))\\ $
+$ \land parent(adam, seth) \\ $
+$ \land parent(seth, enosh) \\ $
+$ \land parent(adam, cain) \\ $
 
 The proof (execution trace of the proof) of a query, for example ```?- grandparent(X, enosh).```, meaning "find X, such that, $grandparent(X, enosh)$" consists of asserting ```:- grandparent(X, enosh)``` or $\forall X: \lnot grandparent(X, enosh)$ and proving a contradiction by matching pairs of Horn Clauses such that $P$ in one binds to $\lnot P$ in another, which produces a new Horn Clause containing all predicates from both clauses except $P$. The proof is found if an empty clause can be derived. Kowalski has shown that any first-order logic statement
 can be proven this way. However, this problem is not easy, because a proper choice of matches has to be found to derive
