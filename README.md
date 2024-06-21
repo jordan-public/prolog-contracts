@@ -137,7 +137,23 @@ Here is the architecture diagram:
 
 ### Execution Trace
 
-!!!TBD
+The Prolog program executes and generates an execution trace. This trace contains a list of Clause identifiers (indices in the program) and their variable bindings.
+
+The program, which is a list of clauses is known to the verifier. To convince the verifier that the execution is correct, the following algorithm is executed:
+```
+    Push the query into the Stack.
+    for clause in executionTrace {
+        match the top of the Stack against the clause using the corresponding bindings or return failure
+        replace the bound tail of the clause at the top of the Stack (BTW the tail may be empty)
+        if the Stack is empty, return success
+    }
+```
+
+The bindings to the query determine the values of its variables. This may be confusing, but when proving a relationship, the distinction between input and output is blurred,
+as all values in the bindings are inputs to the verifier.
+
+Note that the bindings are local to each clause, so each item in the execution trace contains an index to the clause to be matched and a list of bindings for each variable in the clause,
+as the variables have to be enumerated from 0 to n, the number of variables.
 
 ### Cairo Prover Generation
 
