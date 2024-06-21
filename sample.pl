@@ -1,7 +1,5 @@
 :- dynamic grandparent/2.
 :- dynamic parent/2.
-:- retractall(grandparent/2).
-:- retractall(parent/2).
 
 grandparent(A, C) :- parent(A, B), parent(B, C).
 
