@@ -33,11 +33,16 @@ impl TermImpl of TermTrait {
     }
 }
 
-//#[derive(Drop, Copy, PertialEq, Clone)]
-#[derive(Clone)]
+#[derive(Drop, Copy, PertialEq, Clone)]
 struct Predicate {
     name: felt252,
-    args: Array::<Term>,
+    // args: Array::<Term>,
+    arg1: Option::<Term>,
+    arg2: Option::<Term>,
+    arg3: Option::<Term>,
+    arg4: Option::<Term>,
+    arg5: Option::<Term>,
+    arg6: Option::<Term>,
 }
 
 impl DropPredicate of Drop {
